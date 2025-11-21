@@ -25,7 +25,7 @@ module.exports = {
           if (conf.roles) {
             const authRoles = conf.roles.split();
             const { roles } = await discord.getGuildMember(accessToken, conf.guildId);
-            if (authRoles.every(role => roles.includes(role))
+            if (authRoles.every(role => roles.includes(role)))
               throw new WIKI.Error.AuthLoginFailed()
           } else if (conf.guildId && !_.some(profile.guilds, { id: conf.guildId })) {
             throw new WIKI.Error.AuthLoginFailed()
