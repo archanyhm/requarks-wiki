@@ -5,7 +5,7 @@
 // ------------------------------------
 
 const DiscordStrategy = require('passport-discord').Strategy
-const DiscordOauth2 = require('./node_modules/discord-oauth2/index.js')
+const DiscordOauth2 = require('discord-oauth2')
 const _ = require('lodash')
 
 
