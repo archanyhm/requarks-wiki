@@ -7,9 +7,9 @@
 const DiscordStrategy = require('passport-discord').Strategy
 const _ = require('lodash')
 
-async function getGuildMember(accessToken, guildId, userId) {
+async function getGuildMember(accessToken, guildId) {
   const response = await fetch(
-    `https://discord.com/api/v10/guilds/${guildId}/members/${userId}`,
+    `https://discord.com/api/v10/users/@me/guilds/${guildId}/member`,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -33,13 +33,13 @@ module.exports = {
         clientSecret: conf.clientSecret,
         authorizationURL: 'https://discord.com/api/oauth2/authorize?prompt=none',
         callbackURL: conf.callbackURL,
-        scope: 'identify email guilds',
+        scope: 'identify email guilds guilds.members.read',
         passReqToCallback: true
       }, async (req, accessToken, refreshToken, profile, cb) => {
         try {
           if (conf.roles) {
             const authRoles = conf.roles.split()
-            const memberData = await getGuildMember(accessToken, conf.guildId, profile.id)
+            const memberData = await getGuildMember(accessToken, conf.guildId)
             const memberRoles = memberData.roles || []
             if (!authRoles.some(role => memberRoles.includes(role))) {
               throw new WIKI.Error.AuthLoginFailed()
@@ -59,7 +59,7 @@ module.exports = {
 
           if (conf.mapRoles && conf.guildId) {
             try {
-              const memberData = await getGuildMember(accessToken, conf.guildId, profile.id)
+              const memberData = await getGuildMember(accessToken, conf.guildId)
               const discordRoles = memberData.roles || []
               const roleMappings = JSON.parse(conf.roleMappings || '{}')
               const currentGroups = (await user.$relatedQuery('groups').select('groups.id')).map(g => g.id)
