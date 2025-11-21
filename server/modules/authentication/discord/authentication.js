@@ -5,13 +5,28 @@
 // ------------------------------------
 
 const DiscordStrategy = require('passport-discord').Strategy
-const DiscordOauth2 = require('discord-oauth2')
 const _ = require('lodash')
 
+async function getGuildMember(accessToken, guildId, userId) {
+  const response = await fetch(
+    `https://discord.com/api/v10/guilds/${guildId}/members/${userId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'User-Agent': 'Wiki.js'
+      }
+    }
+  )
+  
+  if (!response.ok) {
+    throw new Error(`Discord API error: ${response.status} ${response.statusText}`)
+  }
+  
+  return response.json()
+}
 
 module.exports = {
   init(passport, conf) {
-    const discord = new DiscordOauth2()
     passport.use(conf.key,
       new DiscordStrategy({
         clientID: conf.clientId,
@@ -23,10 +38,12 @@ module.exports = {
       }, async (req, accessToken, refreshToken, profile, cb) => {
         try {
           if (conf.roles) {
-            const authRoles = conf.roles.split();
-            const { roles } = await discord.getGuildMember(accessToken, conf.guildId);
-            if (authRoles.every(role => roles.includes(role)))
+            const authRoles = conf.roles.split()
+            const memberData = await getGuildMember(accessToken, conf.guildId, profile.id)
+            const memberRoles = memberData.roles || []
+            if (!authRoles.some(role => memberRoles.includes(role))) {
               throw new WIKI.Error.AuthLoginFailed()
+            }
           } else if (conf.guildId && !_.some(profile.guilds, { id: conf.guildId })) {
             throw new WIKI.Error.AuthLoginFailed()
           }
@@ -41,10 +58,9 @@ module.exports = {
           })
 
           if (conf.mapRoles && conf.guildId) {
-            const memberData = await discord.getGuildMember(accessToken, conf.guildId)
-            const discordRoles = memberData.roles || []
-            
             try {
+              const memberData = await getGuildMember(accessToken, conf.guildId, profile.id)
+              const discordRoles = memberData.roles || []
               const roleMappings = JSON.parse(conf.roleMappings || '{}')
               const currentGroups = (await user.$relatedQuery('groups').select('groups.id')).map(g => g.id)
               
