@@ -28,3 +28,16 @@ props:
     title: Required Roles
     hint: Optional - Comma-separated list of server role IDs that are required for access (you must have a Server ID property configured to use this.)
     order: 4
+  mapRoles:
+    type: Boolean
+    title: Map Roles
+    hint: Map Discord server roles to WikiJS groups
+    default: false
+    order: 5
+  roleMappings:
+    type: String
+    title: Role Mappings
+    hint: "JSON format mapping Discord role IDs to WikiJS group names: {\"discordRoleId\": \"wikijsGroupName\"}"
+    default: '{}'
+    maxWidth: 500
+    order: 6
